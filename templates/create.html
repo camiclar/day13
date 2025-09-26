@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Add Employee - Employee Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-plus me-2"></i>Add New Employee
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="bi bi-person me-1"></i>Full Name *
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="name" 
+                                   name="name" 
+                                   required 
+                                   placeholder="Enter employee's full name"
+                                   value="{{ request.form.name if request.form.name }}">
+                            <div class="invalid-feedback">
+                                Please provide a valid name.
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="department_id" class="form-label">
+                                <i class="bi bi-building me-1"></i>Department *
+                            </label>
+                            <select class="form-select" id="department_id" name="department_id" required>
+                                <option value="">Select a department</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}" 
+                                        {{ 'selected' if request.form.department_id|string == department.id|string }}>
+                                    {{ department.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a department.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="salary" class="form-label">
+                                <i class="bi bi-currency-dollar me-1"></i>Salary *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="salary" 
+                                       name="salary" 
+                                       step="0.01" 
+                                       min="0" 
+                                       required 
+                                       placeholder="0.00"
+                                       value="{{ request.form.salary if request.form.salary }}">
+                            </div>
+                            <div class="invalid-feedback">
+                                Please provide a valid salary amount.
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="hire_date" class="form-label">
+                                <i class="bi bi-calendar me-1"></i>Hire Date *
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="hire_date" 
+                                   name="hire_date" 
+                                   required
+                                   value="{{ request.form.hire_date if request.form.hire_date }}">
+                            <div class="invalid-feedback">
+                                Please provide a valid hire date.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to Employees
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i>Create Employee
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Make sure to enter the employee's full name as it appears on official documents.</li>
+                    <li>Salary should be entered as a number without currency symbols.</li>
+                    <li>Hire date should be in YYYY-MM-DD format.</li>
+                    <li>All fields marked with * are required.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    
+    // Set today's date as default for hire date
+    document.addEventListener('DOMContentLoaded', function() {
+        const hireDateInput = document.getElementById('hire_date');
+        if (!hireDateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            hireDateInput.value = today;
+        }
+    });
+</script>
+{% endblock %}

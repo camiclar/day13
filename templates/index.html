@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Employee Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-people-fill me-2"></i>Employee Directory
+            </h1>
+            <div>
+                <a href="{{ url_for('create_employee') }}" class="btn btn-primary me-2">
+                    <i class="bi bi-person-plus me-1"></i>Add New Employee
+                </a>
+                <a href="{{ url_for('racing_game') }}" class="btn btn-warning">
+                    <i class="bi bi-trophy me-1"></i>Racing Championship
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="bi bi-people-fill fs-1 mb-2"></i>
+                <div class="stats-number">{{ employees|length }}</div>
+                <div>Total Employees</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="card-body text-center">
+                <i class="bi bi-building fs-1 mb-2"></i>
+                <div class="stats-number">{{ departments|length }}</div>
+                <div>Departments</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-dollar fs-1 mb-2"></i>
+                <div class="stats-number">${{ "%.0f"|format(avg_salary) }}</div>
+                <div>Avg Salary</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up fs-1 mb-2"></i>
+                <div class="stats-number">{{ new_this_year }}</div>
+                <div>New This Year</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-table me-2"></i>Employee List
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        {% if employees %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Salary</th>
+                            <th>Hire Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">{{ employee.id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px;">
+                                        {{ employee.name.split()[0][0] }}{{ employee.name.split()[-1][0] if employee.name.split()|length > 1 else '' }}
+                                    </div>
+                                    <strong>{{ employee.name }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ employee.department }}</span>
+                            </td>
+                            <td>
+                                <span class="text-success fw-bold">${{ "%.2f"|format(employee.salary) }}</span>
+                            </td>
+                            <td>{{ employee.hire_date }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('edit_employee', employee_id=employee.id) }}" 
+                                       class="btn btn-sm btn-outline-primary btn-action" 
+                                       title="Edit Employee">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('delete_employee', employee_id=employee.id) }}" 
+                                          class="d-inline" 
+                                          onsubmit="return confirmDelete('{{ employee.name }}')">
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-danger btn-action" 
+                                                title="Delete Employee">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people fs-1 text-muted mb-3"></i>
+                <h5 class="text-muted">No employees found</h5>
+                <p class="text-muted">Get started by adding your first employee.</p>
+                <a href="{{ url_for('create_employee') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-1"></i>Add Employee
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Department Overview -->
+{% if departments %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-building me-2"></i>Department Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for department in departments %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card employee-card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-building fs-1 text-primary mb-2"></i>
+                                <h6 class="card-title">{{ department.name }}</h6>
+                                <p class="card-text text-muted">
+                                    {{ department_counts.get(department.id, 0) }} employees
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

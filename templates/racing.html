@@ -1,0 +1,647 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Racing Championship - Employee Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-trophy-fill me-2 text-warning"></i>Employee Racing Championship
+            </h1>
+            <div>
+                <button id="startRace" class="btn btn-success me-2">
+                    <i class="bi bi-play-fill me-1"></i>Start Race
+                </button>
+                <button id="resetRace" class="btn btn-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Race Track -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-flag-fill me-2"></i>Race Track
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div id="raceTrack" class="race-track">
+            <div class="finish-line">
+                <i class="bi bi-flag-checkered fs-1 text-success"></i>
+            </div>
+            <div class="race-lanes">
+                {% for employee in employees %}
+                <div class="race-lane" data-employee-id="{{ employee.id }}">
+                    <div class="racer-info">
+                        <div class="racer-avatar">
+                            {{ employee.name.split()[0][0] }}{{ employee.name.split()[-1][0] if employee.name.split()|length > 1 else '' }}
+                        </div>
+                        <div class="racer-details">
+                            <div class="racer-name">{{ employee.name }}</div>
+                            <div class="racer-stats">
+                                <span class="badge bg-info me-1">{{ employee.department }}</span>
+                                <span class="badge bg-success">${{ "%.0f"|format(employee.salary) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="racer-car" data-speed="{{ employee.salary / 1000 }}">
+                        <i class="bi bi-car-front-fill"></i>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Race Controls -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>Race Settings
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="raceLength" class="form-label">Race Length</label>
+                    <select id="raceLength" class="form-select">
+                        <option value="5000">Short (5 seconds)</option>
+                        <option value="10000" selected>Medium (10 seconds)</option>
+                        <option value="15000">Long (15 seconds)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="difficulty" class="form-label">Difficulty</label>
+                    <select id="difficulty" class="form-select">
+                        <option value="easy" selected>Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="enablePowerUps" checked>
+                    <label class="form-check-label" for="enablePowerUps">
+                        Enable Power-ups
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-trophy me-2"></i>Leaderboard
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="leaderboard" class="leaderboard">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-flag me-2"></i>Race not started yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Race Statistics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Race Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="stat-item">
+                            <div class="stat-number" id="raceTime">0.0s</div>
+                            <div class="stat-label">Race Time</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="stat-item">
+                            <div class="stat-number" id="fastestSpeed">0</div>
+                            <div class="stat-label">Fastest Speed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="stat-item">
+                            <div class="stat-number" id="powerUpsUsed">0</div>
+                            <div class="stat-label">Power-ups Used</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalRaces">0</div>
+                            <div class="stat-label">Total Races</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Power-up Modal -->
+<div class="modal fade" id="powerUpModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-lightning-fill me-2"></i>Power-up!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="powerUpIcon" class="fs-1 mb-3"></div>
+                <div id="powerUpName" class="h5"></div>
+                <div id="powerUpDescription" class="text-muted"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.race-track {
+    background: linear-gradient(90deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.375rem;
+}
+
+.finish-line {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.race-lanes {
+    padding: 20px 0;
+}
+
+.race-lane {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.race-lane:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.racer-info {
+    display: flex;
+    align-items: center;
+    min-width: 200px;
+    z-index: 5;
+}
+
+.racer-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.racer-details {
+    flex: 1;
+}
+
+.racer-name {
+    font-weight: bold;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.racer-stats {
+    display: flex;
+    gap: 5px;
+}
+
+.racer-car {
+    position: absolute;
+    right: 50px;
+    font-size: 2rem;
+    color: #f39c12;
+    z-index: 3;
+    transition: all 0.1s ease;
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 5px;
+    left: 20px;
+    right: 80px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00c9ff 0%, #92fe9d 100%);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+.leaderboard {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-position {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.leaderboard-position.gold {
+    background: #ffd700;
+    color: #000;
+}
+
+.leaderboard-position.silver {
+    background: #c0c0c0;
+    color: #000;
+}
+
+.leaderboard-position.bronze {
+    background: #cd7f32;
+    color: #fff;
+}
+
+.leaderboard-position.other {
+    background: #6c757d;
+    color: #fff;
+}
+
+.stat-item {
+    padding: 20px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.race-lane.racing {
+    animation: racePulse 0.5s infinite alternate;
+}
+
+@keyframes racePulse {
+    from { background: rgba(255, 255, 255, 0.1); }
+    to { background: rgba(0, 255, 0, 0.2); }
+}
+
+.racer-car.boost {
+    animation: boost 0.3s ease-in-out;
+}
+
+@keyframes boost {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.power-up-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    z-index: 20;
+    animation: powerUpBurst 1s ease-out;
+}
+
+@keyframes powerUpBurst {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+</style>
+
+<script>
+class EmployeeRacingGame {
+    constructor() {
+        this.racers = [];
+        this.raceInProgress = false;
+        this.raceStartTime = 0;
+        this.raceTime = 0;
+        this.fastestSpeed = 0;
+        this.powerUpsUsed = 0;
+        this.totalRaces = 0;
+        this.powerUps = [
+            { name: 'Speed Boost', icon: 'bi-lightning-fill', color: 'text-warning', effect: 'speed' },
+            { name: 'Shield', icon: 'bi-shield-fill', color: 'text-primary', effect: 'shield' },
+            { name: 'Magnet', icon: 'bi-magnet', color: 'text-danger', effect: 'magnet' },
+            { name: 'Rocket', icon: 'bi-rocket-fill', color: 'text-success', effect: 'rocket' }
+        ];
+        
+        this.initializeRacers();
+        this.setupEventListeners();
+    }
+    
+    initializeRacers() {
+        const raceLanes = document.querySelectorAll('.race-lane');
+        this.racers = Array.from(raceLanes).map((lane, index) => {
+            const employeeId = parseInt(lane.dataset.employeeId);
+            const speed = parseFloat(lane.querySelector('.racer-car').dataset.speed);
+            const name = lane.querySelector('.racer-name').textContent;
+            
+            return {
+                id: employeeId,
+                name: name,
+                lane: lane,
+                car: lane.querySelector('.racer-car'),
+                progress: lane.querySelector('.progress-fill'),
+                speed: speed,
+                position: 0,
+                boost: 0,
+                powerUps: [],
+                finished: false,
+                finishTime: 0
+            };
+        });
+    }
+    
+    setupEventListeners() {
+        document.getElementById('startRace').addEventListener('click', () => this.startRace());
+        document.getElementById('resetRace').addEventListener('click', () => this.resetRace());
+    }
+    
+    startRace() {
+        if (this.raceInProgress) return;
+        
+        this.raceInProgress = true;
+        this.raceStartTime = Date.now();
+        this.totalRaces++;
+        
+        // Reset all racers
+        this.racers.forEach(racer => {
+            racer.position = 0;
+            racer.boost = 0;
+            racer.finished = false;
+            racer.finishTime = 0;
+            racer.lane.classList.add('racing');
+            racer.progress.style.width = '0%';
+        });
+        
+        // Start race animation
+        this.animateRace();
+        
+        // Update UI
+        document.getElementById('startRace').disabled = true;
+        document.getElementById('startRace').innerHTML = '<i class="bi bi-pause-fill me-1"></i>Racing...';
+    }
+    
+    animateRace() {
+        if (!this.raceInProgress) return;
+        
+        const currentTime = Date.now();
+        this.raceTime = (currentTime - this.raceStartTime) / 1000;
+        
+        // Update each racer
+        this.racers.forEach(racer => {
+            if (racer.finished) return;
+            
+            // Calculate speed based on salary and random factors
+            let speed = racer.speed;
+            
+            // Add random variation
+            speed += (Math.random() - 0.5) * 2;
+            
+            // Apply boost
+            if (racer.boost > 0) {
+                speed *= 1.5;
+                racer.boost -= 0.1;
+            }
+            
+            // Update position
+            racer.position += speed * 0.1;
+            
+            // Check for power-ups
+            if (Math.random() < 0.02 && document.getElementById('enablePowerUps').checked) {
+                this.triggerPowerUp(racer);
+            }
+            
+            // Update visual position
+            const progress = Math.min(racer.position / 100, 1);
+            racer.progress.style.width = `${progress * 100}%`;
+            
+            // Check if finished
+            if (progress >= 1 && !racer.finished) {
+                racer.finished = true;
+                racer.finishTime = this.raceTime;
+                racer.lane.classList.remove('racing');
+                racer.lane.classList.add('finished');
+                
+                // Show finish effect
+                this.showFinishEffect(racer);
+            }
+        });
+        
+        // Update statistics
+        this.updateStatistics();
+        
+        // Check if race is over
+        const allFinished = this.racers.every(racer => racer.finished);
+        if (allFinished) {
+            this.endRace();
+        } else {
+            requestAnimationFrame(() => this.animateRace());
+        }
+    }
+    
+    triggerPowerUp(racer) {
+        const powerUp = this.powerUps[Math.floor(Math.random() * this.powerUps.length)];
+        this.powerUpsUsed++;
+        
+        // Show power-up effect
+        this.showPowerUpEffect(racer, powerUp);
+        
+        // Apply power-up effect
+        switch(powerUp.effect) {
+            case 'speed':
+                racer.boost = 2;
+                racer.car.classList.add('boost');
+                setTimeout(() => racer.car.classList.remove('boost'), 2000);
+                break;
+            case 'shield':
+                racer.lane.style.border = '3px solid #007bff';
+                setTimeout(() => racer.lane.style.border = '', 3000);
+                break;
+            case 'magnet':
+                // Attract other racers (visual effect)
+                racer.lane.style.boxShadow = '0 0 20px #dc3545';
+                setTimeout(() => racer.lane.style.boxShadow = '', 2000);
+                break;
+            case 'rocket':
+                racer.position += 10;
+                racer.car.style.transform = 'translateY(-10px)';
+                setTimeout(() => racer.car.style.transform = '', 1000);
+                break;
+        }
+    }
+    
+    showPowerUpEffect(racer, powerUp) {
+        const effect = document.createElement('div');
+        effect.className = 'power-up-effect';
+        effect.innerHTML = `<i class="bi ${powerUp.icon} ${powerUp.color}"></i>`;
+        racer.lane.appendChild(effect);
+        
+        setTimeout(() => effect.remove(), 1000);
+    }
+    
+    showFinishEffect(racer) {
+        const effect = document.createElement('div');
+        effect.className = 'power-up-effect';
+        effect.innerHTML = '<i class="bi bi-trophy-fill text-warning"></i>';
+        racer.lane.appendChild(effect);
+        
+        setTimeout(() => effect.remove(), 1000);
+    }
+    
+    endRace() {
+        this.raceInProgress = false;
+        
+        // Sort racers by finish time
+        const results = this.racers
+            .filter(racer => racer.finished)
+            .sort((a, b) => a.finishTime - b.finishTime);
+        
+        // Update leaderboard
+        this.updateLeaderboard(results);
+        
+        // Update UI
+        document.getElementById('startRace').disabled = false;
+        document.getElementById('startRace').innerHTML = '<i class="bi bi-play-fill me-1"></i>Start Race';
+        
+        // Remove racing classes
+        this.racers.forEach(racer => {
+            racer.lane.classList.remove('racing', 'finished');
+        });
+    }
+    
+    updateLeaderboard(results) {
+        const leaderboard = document.getElementById('leaderboard');
+        leaderboard.innerHTML = '';
+        
+        results.forEach((racer, index) => {
+            const item = document.createElement('div');
+            item.className = 'leaderboard-item';
+            
+            const positionClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'other';
+            
+            item.innerHTML = `
+                <div class="leaderboard-position ${positionClass}">${index + 1}</div>
+                <div class="racer-avatar" style="width: 30px; height: 30px; margin-right: 10px;">
+                    ${racer.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${racer.name}</div>
+                    <small class="text-muted">${racer.finishTime.toFixed(2)}s</small>
+                </div>
+            `;
+            
+            leaderboard.appendChild(item);
+        });
+    }
+    
+    updateStatistics() {
+        document.getElementById('raceTime').textContent = `${this.raceTime.toFixed(1)}s`;
+        
+        const currentSpeed = Math.max(...this.racers.map(r => r.speed + r.boost));
+        if (currentSpeed > this.fastestSpeed) {
+            this.fastestSpeed = currentSpeed;
+        }
+        document.getElementById('fastestSpeed').textContent = Math.round(this.fastestSpeed);
+        document.getElementById('powerUpsUsed').textContent = this.powerUpsUsed;
+        document.getElementById('totalRaces').textContent = this.totalRaces;
+    }
+    
+    resetRace() {
+        this.raceInProgress = false;
+        this.raceTime = 0;
+        this.fastestSpeed = 0;
+        this.powerUpsUsed = 0;
+        
+        // Reset all racers
+        this.racers.forEach(racer => {
+            racer.position = 0;
+            racer.boost = 0;
+            racer.finished = false;
+            racer.finishTime = 0;
+            racer.lane.classList.remove('racing', 'finished');
+            racer.progress.style.width = '0%';
+            racer.car.style.transform = '';
+            racer.lane.style.border = '';
+            racer.lane.style.boxShadow = '';
+        });
+        
+        // Reset UI
+        document.getElementById('startRace').disabled = false;
+        document.getElementById('startRace').innerHTML = '<i class="bi bi-play-fill me-1"></i>Start Race';
+        document.getElementById('leaderboard').innerHTML = '<div class="text-center text-muted"><i class="bi bi-flag me-2"></i>Race not started yet</div>';
+        
+        // Reset statistics
+        this.updateStatistics();
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new EmployeeRacingGame();
+});
+</script>
+{% endblock %}
